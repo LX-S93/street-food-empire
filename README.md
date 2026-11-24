@@ -14,20 +14,38 @@ An idle tycoon game about growing a single street food stand into a restaurant c
 
 ## Status
 
-The current build is a single, self-contained `index.html`, playable offline as a PWA. The interface is still German only.
+- English by default, German selectable (Office → Language, or on the welcome screen).
+- Illustrated art generated locally with ComfyUI (Z-Image Turbo) and short looping storefront animations (Wan 2.1 VACE).
+- Vite + TypeScript project, deployed to GitHub Pages by GitHub Actions on every push to `main`.
 
 ### Roadmap
 
-1. **English first, German selectable** via an i18n layer.
-2. Restructure into TypeScript + Vite with the simulation separated from the UI and game content stored as data (JSON).
-3. Illustrated assets: staff portraits, dishes, storefronts per tier, city map, short loop animations.
+1. Split `src/game.ts` into typed modules (simulation, UI, data) and remove `@ts-nocheck` step by step.
+2. Move game content (dishes, roles, events) into JSON data files.
+3. More art: animated kitchen shift, staff portraits per role, weather scenes.
 4. Balancing driven by headless simulations and opt-in play telemetry.
 5. Native iOS/Android packaging (Capacitor).
+
+## Project layout
+
+```
+index.html            app shell
+src/main.ts           entry: styles, game, service worker
+src/game.ts           game simulation and UI (being modularised)
+src/i18n/en.json      German source text -> English
+src/styles.css        styles
+public/art/           game art (WebP), generated with ComfyUI
+public/sw.js          offline cache
+tests/                headless simulation tests (Node)
+```
 
 ## Development
 
 ```bash
-npm test   # extracts the game script and runs the headless simulation tests
+npm install
+npm run dev     # local dev server
+npm test        # headless simulation tests
+npm run build   # production build in dist/
 ```
 
-Updates pushed to `main` are served through GitHub Pages; installed copies pick them up the next time they are opened online.
+Updates pushed to `main` are tested, built and deployed automatically; installed copies pick them up the next time they are opened online.
