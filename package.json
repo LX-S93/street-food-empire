@@ -1,0 +1,8 @@
+{
+  "name": "street-food-empire",
+  "private": true,
+  "description": "Idle tycoon: grow a street food stand into a restaurant chain.",
+  "scripts": {
+    "test": "node tests/extract.js && cd tests && node test.js && node test_reg.js && node test_veg.js && node test_x.js && node test_combo.js && node test_temp.js && node test_pop.js && node test_world.js"
+  }
+}
