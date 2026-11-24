@@ -1304,5 +1304,6 @@
 "</b><span>verpasst</span></div></div></div>": "</b><span>missed</span></div></div></div>",
 "<span class=\"pill good\">hier</span>": "<span class=\"pill good\">here</span>",
 "<span class=\"pill good\">voll</span>": "<span class=\"pill good\">full</span>",
-"<span class=\"pill warn\">krank</span>": "<span class=\"pill warn\">sick</span>"
+"<span class=\"pill warn\">krank</span>": "<span class=\"pill warn\">sick</span>",
+"frei": "free"
 }

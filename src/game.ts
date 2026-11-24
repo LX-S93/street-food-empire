@@ -826,7 +826,7 @@ function renderRush(){const R=ui.rush,el=document.getElementById('rush');if(!R||
   const tks=R.tk.map(t=>'<div class="tk'+(t.out?(t.ok?' out':' gone'):'')+'" data-tk="'+t.id+'"><div class="tk-h"><span>'+t.no+'</span>'+(t.veg?'<span class="tk-v">veggie</span>':'')+'</div>'+t.items.map(x=>'<div class="tk-i'+(x.d>=x.n?' done':'')+'"><span>'+x.n+'× '+(SHORT[x.p]||P_(x.p).n)+'</span>'+(x.n>1&&x.d<x.n?'<b>'+x.d+'/'+x.n+'</b>':'')+'</div>').join('')+'<div class="tk-t"><i></i></div>'+(t.out?'<div class="stamp">'+(t.ok?'RAUS':'WEG')+'</div>':'')+'</div>').join('');
   let stn='';for(const st of ['grill','fry','pot']){if(!used[st])continue;const sf=fl&&fl.key==='stn:'+st?' '+fl.k:'';
     stn+='<div class="stn'+sf+'"><div class="stn-h">'+img('st/'+st,'stimg')+STN[st]+'</div><div class="slots">'+R.slots[st].map((z,i)=>{const key=st+':'+i,f=fl&&fl.key===key?'<span class="sl-f '+fl.k+'">'+fl.msg+'</span>':'';
-      return z?'<button type="button" class="slot raw" data-rs="'+key+'" data-st="raw"><span class="sl-n">'+(SHORT[z.p]||P_(z.p).n)+TR('</span><span class="sb"><i></i></span><span class="sl-s">gart …</span>')+f+'</button>':'<div class="slot empty">'+(f||'frei')+'</div>';}).join('')+'</div></div>';}
+      return z?'<button type="button" class="slot raw" data-rs="'+key+'" data-st="raw"><span class="sl-n">'+(SHORT[z.p]||P_(z.p).n)+TR('</span><span class="sb"><i></i></span><span class="sl-s">gart …</span>')+f+'</button>':'<div class="slot empty">'+(f||TR('frei'))+'</div>';}).join('')+'</div></div>';}
   const pass='<div class="passrow'+(fl&&fl.key==='pass'?' bad':'')+'"><span class="pass-l">Pass</span>'+(R.pass.length?R.pass.map((it,i)=>'<span class="pitem'+(it.perfect?' pf':'')+'" data-pi="'+i+'">'+(SHORT[it.p]||P_(it.p).n)+'<i></i></span>').join(''):TR('<span class="pass-e">Fertiges landet hier und geht an den ältesten Bon.</span>'))+'</div>';
   const tiles=items.map(f=>{const P=f.P,k=COOK[P.id],cat=P.drink?'d':P.diet==='vegan'?'vg':P.diet?'v':'m',ff=fl&&fl.key==='p:'+P.id?' pop':'';
     return '<button type="button" class="tile c-'+cat+ff+'" data-rt="'+P.id+'">'+img('dish/'+P.id,'tlimg')+'<span class="tl-n">'+(SHORT[P.id]||P.n)+'</span><span class="tl-k">'+(k?({grill:'Grill',fry:TR('Fritte'),pot:TR('Herd')})[k[0]]+' '+String(k[1]).replace('.',',')+' s':TR('sofort'))+'</span>'+(open[P.id]>0?'<span class="tl-c">'+open[P.id]+'</span>':'')+'</button>';}).join('');
@@ -1168,7 +1168,31 @@ function probList(list,title,cur){
 }
 function vacancy(loc){for(const R of ROLES)if(loc.staff[R.id]<Math.min(loc.want[R.id]||0,maxStaff(loc,R.id)))return R.n;return '';}
 function status(loc,c){const P=problems(loc,c);return P.some(p=>p.k==='bad')?'bad':P.length?'warn':'good';}
-function setHTML(el,html){if(el.__h===html)return;const f=document.activeElement&&document.activeElement.id;el.innerHTML=html;el.__h=html;if(f){const n=document.getElementById(f);if(n&&n!==document.activeElement)try{n.focus({preventScroll:true});}catch(e){}}}
+// Patch the live DOM towards the new markup instead of replacing it, so images
+// (and animated WebP) are not re-created on every tick. Safari flickers otherwise.
+function morphAttrs(a,b){
+  for(const at of Array.from(a.attributes))if(!b.hasAttribute(at.name))a.removeAttribute(at.name);
+  for(const at of Array.from(b.attributes))if(a.getAttribute(at.name)!==at.value)a.setAttribute(at.name,at.value);
+  const tag=a.tagName,act=a===document.activeElement;
+  if(tag==='INPUT'&&!act){const v=b.getAttribute('value');if(v!=null&&a.value!==v)a.value=v;a.checked=b.hasAttribute('checked');}
+  else if(tag==='TEXTAREA'&&!act){if(a.value!==b.textContent)a.value=b.textContent;}
+}
+function morph(a,b){
+  const bc=Array.from(b.childNodes);
+  for(let i=0;i<bc.length;i++){
+    const nb=bc[i],na=a.childNodes[i];
+    if(!na){a.appendChild(nb.cloneNode(true));continue;}
+    if(na.nodeType!==nb.nodeType||na.nodeName!==nb.nodeName||(na.nodeName==='IMG'&&na.getAttribute('src')!==nb.getAttribute('src'))){a.replaceChild(nb.cloneNode(true),na);continue;}
+    if(na.nodeType!==1){if(na.nodeValue!==nb.nodeValue)na.nodeValue=nb.nodeValue;continue;}
+    morphAttrs(na,nb);
+    if(na.tagName==='SELECT'){morph(na,nb);if(na!==document.activeElement){const o=nb.querySelector('option[selected]');const v=o?o.getAttribute('value')??o.textContent:null;if(v!=null&&na.value!==v)na.value=v;}continue;}
+    morph(na,nb);
+  }
+  while(a.childNodes.length>bc.length)a.removeChild(a.lastChild);
+}
+function setHTML(el,html){if(el.__h===html)return;const f=document.activeElement&&document.activeElement.id;
+  if(el.__h==null||html===''){el.innerHTML=html;}else{const t=document.createElement('template');t.innerHTML=html;morph(el,t.content);}
+  el.__h=html;if(f){const n=document.getElementById(f);if(n&&n!==document.activeElement)try{n.focus({preventScroll:true});}catch(e){}}}
 
 function tips(loc,c){
   if(!c.foods.length)return TR('Auf der Karte steht kein Gericht. Ohne Angebot kommt niemand.');
@@ -1325,7 +1349,7 @@ const IC={
  up:'<path d="M12 19V5M6 11l6-6 6 6"/>',
  megaphone:'<path d="M4 10v4h3l8 4V6l-8 4z"/><path d="M18 9a4 4 0 0 1 0 6"/>'};
 const ART='art/';
-function img(src,cls,alt){return '<img class="'+cls+'" src="'+ART+src+'.webp" alt="'+(alt||'')+'"'+(alt?'':' aria-hidden="true"')+' loading="lazy" decoding="async" onerror="this.style.visibility=\'hidden\'">';}
+function img(src,cls,alt){return '<img class="'+cls+'" src="'+ART+src+'.webp" alt="'+(alt||'')+'"'+(alt?'':' aria-hidden="true"')+' loading="lazy" onerror="this.style.visibility=\'hidden\'">';}
 function porSrc(name){return 'por/'+String(name||'').split(' ')[0];}
 function por(name,cls){return img(porSrc(name),cls||'por');}
 function ic(n){if(n)return img('ic/'+n,'ic');return '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(IC[n]||'')+'</svg>';}
