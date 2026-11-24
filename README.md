@@ -32,6 +32,10 @@ An idle tycoon game about growing a single street food stand into a restaurant c
 index.html            app shell
 src/main.ts           entry: styles, game, service worker
 src/game.ts           game simulation and UI (being modularised)
+src/data.ts           static game data (typed)
+src/i18n.ts           language selection and TR()
+src/audio.ts          synthesised sound effects and music (Web Audio)
+src/ui/dom.ts         flicker-free DOM patching
 src/i18n/en.json      German source text -> English
 src/styles.css        styles
 public/art/           game art (WebP), generated with ComfyUI
